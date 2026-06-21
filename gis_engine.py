@@ -3,10 +3,26 @@ import ee
 # =========================
 # EARTH ENGINE INIT
 # =========================
-try:
-    ee.Initialize(project="tetu-nyeri")
-except Exception:
-    ee.Initialize()
+import os
+import ee
+
+service_account = os.getenv(
+    "EE_SERVICE_ACCOUNT"
+)
+
+private_key = os.getenv(
+    "EE_PRIVATE_KEY"
+)
+
+credentials = ee.ServiceAccountCredentials(
+    service_account,
+    key_data=private_key
+)
+
+ee.Initialize(
+    credentials,
+    project="tetu-nyeri"
+)
 
 
 # =========================
