@@ -6,6 +6,8 @@ const app = express();
 const db = require("./firebase");
 
 const PORT = 3000;
+const GIS_URL =
+  "https://agrivision-gis.onrender.com";
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
@@ -480,7 +482,7 @@ app.get(
 
       const response =
   await axios.get(
-    "http://127.0.0.1:5001/ndvi_history",
+    `${GIS_URL}/ndvi_history`,
     {
       params: {
         lat: centerLat,
@@ -679,7 +681,7 @@ if (
     // 🌍 GIS DATA FROM FLASK
     // =========================
     const gisResponse = await axios.get(
-      "http://127.0.0.1:5001/gis",
+      `${GIS_URL}/gis`,
       {
         params: {
           lat: centerLat,
@@ -697,7 +699,7 @@ if (
 
     try {
       const ndviResponse = await axios.get(
-        "http://127.0.0.1:5001/ndvi_point",
+        `${GIS_URL}/ndvi_point`,
         {
           params: {
             lat: centerLat,
@@ -720,7 +722,7 @@ if (
 
     try {
       const tileResponse = await axios.post(
-        "http://127.0.0.1:5001/farm_ndvi_tiles",
+        `${GIS_URL}/farm_ndvi_tiles`,
         {
           points: farmer.geometry.points
         }
@@ -963,7 +965,7 @@ else if (
 // =========================
 const historyResponse =
   await axios.get(
-    "http://127.0.0.1:5001/ndvi_history",
+    `${GIS_URL}/ndvi_history`,
     {
       params: {
         lat: centerLat,
