@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: agrivision-gis
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app

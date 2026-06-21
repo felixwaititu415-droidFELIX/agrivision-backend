@@ -1,0 +1,4 @@
+Flask
+earthengine-api
+gunicorn
+python-dotenv
