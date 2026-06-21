@@ -1,10 +1,9 @@
+import os
 import ee
 
 # =========================
 # EARTH ENGINE INIT
 # =========================
-import os
-import ee
 
 service_account = os.getenv(
     "EE_SERVICE_ACCOUNT"
@@ -14,22 +13,32 @@ private_key = os.getenv(
     "EE_PRIVATE_KEY"
 )
 
-private_key = private_key.replace(
-    "\\n",
-    "\n"
-)
+if service_account and private_key:
 
-credentials = ee.ServiceAccountCredentials(
-    service_account,
-    key_data=private_key
-)
+    private_key = private_key.replace(
+        "\\n",
+        "\n"
+    )
 
-ee.Initialize(
-    credentials,
-    project="tetu-nyeri"
-)
+    credentials = ee.ServiceAccountCredentials(
+        service_account,
+        key_data=private_key
+    )
 
+    ee.Initialize(
+        credentials,
+        project="tetu-nyeri"
+    )
 
+else:
+
+    try:
+        ee.Initialize(
+            project="tetu-nyeri"
+        )
+
+    except Exception:
+        ee.Initialize()
 # =========================
 # NDVI FUNCTION
 # =========================
