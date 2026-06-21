@@ -13,6 +13,27 @@ private_key = os.getenv(
     "EE_PRIVATE_KEY"
 )
 
+print(
+    "SERVICE ACCOUNT:",
+    service_account
+)
+
+if private_key:
+
+    print(
+        "PRIVATE KEY FOUND"
+    )
+
+    print(
+        private_key[:50]
+    )
+
+else:
+
+    print(
+        "NO PRIVATE KEY"
+    )
+
 if service_account and private_key:
 
     private_key = private_key.replace(
