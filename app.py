@@ -12,10 +12,6 @@ app = Flask(__name__)
 # =========================
 # SAFE INIT
 # =========================
-try:
-    ee.Initialize(project="tetu-nyeri")
-except Exception:
-    ee.Initialize()
 
 
 # =========================
