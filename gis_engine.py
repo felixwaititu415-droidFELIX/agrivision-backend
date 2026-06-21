@@ -14,6 +14,11 @@ private_key = os.getenv(
     "EE_PRIVATE_KEY"
 )
 
+private_key = private_key.replace(
+    "\\n",
+    "\n"
+)
+
 credentials = ee.ServiceAccountCredentials(
     service_account,
     key_data=private_key
