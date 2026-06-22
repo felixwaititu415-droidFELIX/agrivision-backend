@@ -735,7 +735,12 @@ if (
 
       ndviMap = tileResponse.data.tile_url;
     } catch (e) {
-      console.log("NDVI tile failed");
+
+      console.log(
+        "NDVI tile failed:",
+        e.response?.data || e.message
+      );
+    
     }
 
     // =========================
