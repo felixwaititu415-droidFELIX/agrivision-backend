@@ -985,53 +985,39 @@ const history =
 // =========================
 // RECOMMENDATIONS
 // =========================
-  const aiAdvice =
-  await getGeminiFarmAnalysis(
-
-    farmer,
-
-    weather,
-
-    gis,
-
-    diseaseRisk,
-
-    possibleDisease,
-
-    predictedYield,
-
-    history,
-
-    healthScore,
-
-    yieldStatus,
-
-    trend
-
-  );
-
-let aiData;
+let aiData = {
+  status: "AI temporarily unavailable",
+  risk: "Unknown",
+  actions: [
+    "Retry analysis later"
+  ]
+};
 
 try {
 
-  aiData =
-    JSON.parse(
-      aiAdvice
+  const aiAdvice =
+    await getGeminiFarmAnalysis(
+      farmer,
+      weather,
+      gis,
+      diseaseRisk,
+      possibleDisease,
+      predictedYield,
+      history,
+      healthScore,
+      yieldStatus,
+      trend
     );
 
-} catch {
+  aiData = JSON.parse(aiAdvice);
 
-  aiData = {
+} catch (e) {
 
-    status:
-      "Analysis unavailable",
+  console.log(
+    "Gemini failed:",
+    e.message
+  );
 
-    risk:
-      "Unknown",
-
-    actions: []
-
-  };
 }
 
 // =========================
