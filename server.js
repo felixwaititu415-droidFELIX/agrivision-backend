@@ -27,6 +27,11 @@ const JWT_SECRET =
 app.use(express.json());
 app.use(cors());
 
+console.log(
+  "Gemini key starts with:",
+  process.env.GEMINI_API_KEY?.substring(0, 10)
+);
+
 console.log("SERVER FILE LOADED");
 
 // ==========================
