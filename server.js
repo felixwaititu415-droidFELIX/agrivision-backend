@@ -1096,6 +1096,7 @@ if (alerts.length === 0) {
 // =========================
 // RESPONSE
 // =========================
+console.log("REACHED FINAL RESPONSE");
 res.json({
   farmer,
   weather,
@@ -1121,9 +1122,27 @@ possibleDisease,
 ndvi_map: ndviMap
 });
 
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+} catch (err) {
+
+  console.error("========== ADVISORY ERROR ==========");
+  console.error(err.message);
+
+  if (err.response) {
+    console.error("STATUS:", err.response.status);
+    console.error("URL:", err.config?.url);
+    console.error("DATA:", err.response.data);
   }
+
+  console.error(err.stack);
+
+  res.status(500).json({
+    error: err.message,
+    failedUrl: err.config?.url,
+    status: err.response?.status,
+    details: err.response?.data || null
+  });
+
+}
 });
 
 app.post("/farmers/:id/polygon", async (req, res) => {
