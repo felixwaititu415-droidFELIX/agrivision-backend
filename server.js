@@ -200,10 +200,13 @@ app.post("/register", async (req, res) => {
 
     const {
       name,
-      email,
       password
     } = req.body;
-
+    
+    const email =
+      req.body.email
+        .trim()
+        .toLowerCase();
     const existing =
       await db
         .collection("users")
@@ -250,9 +253,13 @@ app.post("/login", async (req, res) => {
   try {
 
     const {
-      email,
       password
     } = req.body;
+    
+    const email =
+      req.body.email
+        .trim()
+        .toLowerCase();
 
     const snapshot =
       await db
