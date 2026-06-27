@@ -1955,6 +1955,7 @@ app.get("/satellite-png/:id", async (req, res) => {
     if (!doc.exists) {
 
       return res.status(404).json({
+        success: false,
         error: "Farm not found"
       });
 
@@ -1962,19 +1963,36 @@ app.get("/satellite-png/:id", async (req, res) => {
 
     const farmer = doc.data();
 
+    if (
+      !farmer.geometry ||
+      !farmer.geometry.points
+    ) {
+
+      return res.status(400).json({
+        success: false,
+        error: "Farm boundary missing"
+      });
+
+    }
+
     const response = await axios.post(
 
       `${GIS_URL}/satellite_png`,
 
       {
-
         points: farmer.geometry.points
-
       }
 
     );
 
     res.json({
+
+      success: true,
+
+      type: "satellite",
+
+      generatedAt:
+        new Date().toISOString(),
 
       satellite_png:
         response.data.image_url
@@ -1986,6 +2004,8 @@ app.get("/satellite-png/:id", async (req, res) => {
     console.error(err);
 
     res.status(500).json({
+
+      success: false,
 
       error: err.message
 
