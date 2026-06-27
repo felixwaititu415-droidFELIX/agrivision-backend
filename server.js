@@ -10,6 +10,7 @@ const GIS_URL =
   "https://agrivision-gis.onrender.com";
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const turf = require("@turf/turf");
 require("dotenv").config();
 
 const { GoogleGenAI } =
@@ -401,6 +402,79 @@ function normalizeCrop(crop) {
 }
 
 // ==========================
+// SURVEY CALCULATIONS
+// ==========================
+function getSurveyInfo(points) {
+
+  if (!points || points.length < 3) {
+    return null;
+  }
+
+  // Turf requires [lon, lat]
+  const coordinates = points.map(p => [
+    p.lon,
+    p.lat
+  ]);
+
+  // Close polygon
+  coordinates.push([
+    points[0].lon,
+    points[0].lat
+  ]);
+
+  const polygon = turf.polygon([
+    coordinates
+  ]);
+
+  const area =
+    turf.area(polygon);
+
+  const perimeter =
+    turf.length(
+      turf.polygonToLine(polygon),
+      {
+        units: "kilometers"
+      }
+    );
+
+  const centroid =
+    turf.centroid(polygon);
+
+  return {
+
+    area_m2:
+      area,
+
+    area_ha:
+      area / 10000,
+
+    area_acres:
+      area / 4046.856,
+
+    perimeter_m:
+      perimeter * 1000,
+
+    centroid: {
+
+      lat:
+        centroid.geometry.coordinates[1],
+
+      lon:
+        centroid.geometry.coordinates[0]
+
+    },
+
+    vertices:
+      points.length,
+
+    referenceSystem:
+      "WGS84 (EPSG:4326)"
+
+  };
+
+}
+
+// ==========================
 // REAL WEATHER (OPEN-METEO)
 // ==========================
 async function getWeather(lat, lon) {
@@ -675,6 +749,12 @@ app.get("/advisory/:id", async (req, res) => {
     }
 
     const farmer = doc.data();
+    const survey =
+  farmer.geometry
+    ? getSurveyInfo(
+        farmer.geometry.points
+      )
+    : null;
     let centerLat = farmer.lat;
 let centerLon = farmer.lon;
 
@@ -1106,6 +1186,7 @@ if (alerts.length === 0) {
 console.log("REACHED FINAL RESPONSE");
 res.json({
   farmer,
+  survey,
   weather,
   gis,
   alerts,
