@@ -9,6 +9,7 @@ from gis_engine import (
     aspect_to_direction,
     get_utm_coordinates,
     get_satellite_image,
+    get_satellite_png,
 )
 
 app = Flask(__name__)
@@ -298,6 +299,42 @@ def satellite_image():
     return jsonify({
 
         "tile_url": tile_url
+
+    })
+
+# =========================
+# SATELLITE PNG
+# =========================
+@app.route(
+    "/satellite_png",
+    methods=["POST"]
+)
+def satellite_png():
+
+    data = request.json
+
+    points = data["points"]
+
+    coordinates = [
+        [p["lon"], p["lat"]]
+        for p in points
+    ]
+
+    coordinates.append(
+        coordinates[0]
+    )
+
+    region = ee.Geometry.Polygon(
+        [coordinates]
+    )
+
+    image_url = get_satellite_png(
+        region
+    )
+
+    return jsonify({
+
+        "image_url": image_url
 
     })
 

@@ -329,3 +329,49 @@ def get_satellite_image(region):
     map_id = rgb.getMapId()
 
     return map_id["tile_fetcher"].url_format
+
+# =========================
+# SATELLITE PNG
+# =========================
+def get_satellite_png(region):
+
+    collection = (
+        ee.ImageCollection(
+            "COPERNICUS/S2_SR_HARMONIZED"
+        )
+        .filterBounds(region)
+        .filterDate(
+            "2024-01-01",
+            "2024-12-31"
+        )
+        .filter(
+            ee.Filter.lt(
+                "CLOUDY_PIXEL_PERCENTAGE",
+                20
+            )
+        )
+    )
+
+    image = collection.median()
+
+    rgb = image.select(
+        ["B4", "B3", "B2"]
+    )
+
+    url = rgb.getThumbURL({
+
+        "region": region,
+
+        "dimensions": 1200,
+
+        "format": "png",
+
+        "min": 0,
+
+        "max": 3000,
+
+        "gamma": 1.2
+
+    })
+
+    return url
