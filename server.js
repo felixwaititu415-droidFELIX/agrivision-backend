@@ -11,6 +11,9 @@ const GIS_URL =
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const turf = require("@turf/turf");
+const multer = require("multer");
+const xml2js = require("xml2js");
+const fs = require("fs");
 require("dotenv").config();
 
 const { GoogleGenAI } =
@@ -27,6 +30,9 @@ const JWT_SECRET =
 
 app.use(express.json());
 app.use(cors());
+const upload = multer({
+  dest: "uploads/"
+});
 
 console.log(
   "Gemini key starts with:",
@@ -1295,7 +1301,316 @@ app.post("/farmers/:id/polygon", async (req, res) => {
     });
 
   }
+
 });
+
+    
+// ==========================
+// EXPORT GEOJSON
+// ==========================
+app.get("/export/geojson/:id", async (req, res) => {
+
+  try {
+
+    const doc =
+      await db
+      .collection("farmers")
+      .doc(req.params.id)
+      .get();
+
+    if (!doc.exists) {
+
+      return res.status(404).json({
+        error: "Farm not found"
+      });
+
+    }
+
+    const farmer =
+      doc.data();
+
+    const coordinates =
+      farmer.geometry.points.map(
+        p => [p.lon, p.lat]
+      );
+
+    coordinates.push(
+      coordinates[0]
+    );
+
+    const geojson = {
+
+      type: "Feature",
+
+      properties: {
+
+        name: farmer.name,
+
+        crop: farmer.crop,
+
+        location: farmer.location
+
+      },
+
+      geometry: {
+
+        type: "Polygon",
+
+        coordinates: [
+          coordinates
+        ]
+
+      }
+
+    };
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=${farmer.name}.geojson`
+    );
+
+    res.setHeader(
+      "Content-Type",
+      "application/geo+json"
+    );
+
+    res.send(
+      JSON.stringify(
+        geojson,
+        null,
+        2
+      )
+    );
+
+  } catch (err) {
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
+
+// ==========================
+// EXPORT KML
+// ==========================
+app.get("/export/kml/:id", async (req, res) => {
+
+  try {
+
+    const doc =
+      await db
+        .collection("farmers")
+        .doc(req.params.id)
+        .get();
+
+    if (!doc.exists) {
+      return res.status(404).json({
+        error: "Farm not found"
+      });
+    }
+
+    const farmer = doc.data();
+
+    const coordinates =
+      farmer.geometry.points
+        .map(p => `${p.lon},${p.lat},0`)
+        .join("\n");
+
+    const first =
+      farmer.geometry.points[0];
+
+    const closedCoordinates =
+      coordinates +
+      `\n${first.lon},${first.lat},0`;
+
+    const kml = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+
+<name>${farmer.name}</name>
+
+<Placemark>
+
+<name>${farmer.name}</name>
+
+<description>
+Crop: ${farmer.crop}
+Location: ${farmer.location}
+</description>
+
+<Polygon>
+
+<outerBoundaryIs>
+
+<LinearRing>
+
+<coordinates>
+
+${closedCoordinates}
+
+</coordinates>
+
+</LinearRing>
+
+</outerBoundaryIs>
+
+</Polygon>
+
+</Placemark>
+
+</Document>
+
+</kml>`;
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=${farmer.name}.kml`
+    );
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.google-earth.kml+xml"
+    );
+
+    res.send(kml);
+
+  } catch (err) {
+
+    res.status(500).json({
+      error: err.message
+    });
+
+  }
+
+});
+
+// ==========================
+// IMPORT KML
+// ==========================
+app.post(
+  "/import/kml",
+  upload.single("kml"),
+  async (req, res) => {
+
+    try {
+
+      if (!req.file) {
+
+        return res.status(400).json({
+          error: "No KML uploaded"
+        });
+
+      }
+
+      const xml =
+        fs.readFileSync(
+          req.file.path,
+          "utf8"
+        );
+
+      const parser =
+        new xml2js.Parser();
+
+      const result =
+        await parser.parseStringPromise(xml);
+
+      const coordinatesText =
+        result.kml
+          .Document[0]
+          .Placemark[0]
+          .Polygon[0]
+          .outerBoundaryIs[0]
+          .LinearRing[0]
+          .coordinates[0];
+
+      const coordinates =
+        coordinatesText
+          .trim()
+          .split(/\s+/)
+          .map(coord => {
+
+            const [
+              lon,
+              lat
+            ] =
+              coord
+                .split(",");
+
+            return {
+
+              lat:
+                parseFloat(lat),
+
+              lon:
+                parseFloat(lon)
+
+            };
+
+          });
+
+      // Remove duplicated closing point
+      if (
+        coordinates.length > 1
+      ) {
+
+        const first =
+          coordinates[0];
+
+        const last =
+          coordinates[
+            coordinates.length - 1
+          ];
+
+        if (
+          first.lat === last.lat &&
+          first.lon === last.lon
+        ) {
+
+          coordinates.pop();
+
+        }
+
+      }
+
+      fs.unlinkSync(
+        req.file.path
+      );
+
+      res.json({
+
+        success: true,
+
+        points:
+          coordinates
+
+      });
+
+    } catch (err) {
+
+      if (
+        req.file &&
+        fs.existsSync(
+          req.file.path
+        )
+      ) {
+
+        fs.unlinkSync(
+          req.file.path
+        );
+
+      }
+
+      res.status(500).json({
+        error: err.message
+      });
+
+    }
+
+  }
+);
+
 
 // ==========================
 // ASK AGRONOMIST (GEMINI)
