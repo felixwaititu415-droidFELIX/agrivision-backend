@@ -1,3 +1,4 @@
+from pyproj import Transformer
 import os
 import ee
 
@@ -243,3 +244,41 @@ def aspect_to_direction(angle):
     )
 
     return directions[index]
+
+# =========================
+# WGS84 -> UTM
+# =========================
+def get_utm_coordinates(lat, lon):
+
+    zone = int((lon + 180) / 6) + 1
+
+    hemisphere = "south" if lat < 0 else "north"
+
+    epsg = (
+        32700 + zone
+        if hemisphere == "south"
+        else 32600 + zone
+    )
+
+    transformer = Transformer.from_crs(
+        "EPSG:4326",
+        f"EPSG:{epsg}",
+        always_xy=True
+    )
+
+    easting, northing = transformer.transform(
+        lon,
+        lat
+    )
+
+    return {
+
+        "zone": f"{zone}{'S' if lat < 0 else 'N'}",
+
+        "easting": easting,
+
+        "northing": northing,
+
+        "epsg": epsg
+
+    }

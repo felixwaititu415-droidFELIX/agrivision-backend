@@ -6,7 +6,8 @@ from gis_engine import (
     get_ndvi_image,
     get_ndvi_history,
     get_terrain,
-    aspect_to_direction
+    aspect_to_direction,
+    get_utm_coordinates
 )
 
 app = Flask(__name__)
@@ -228,6 +229,35 @@ def terrain():
 
         return jsonify(
             terrain_data
+        )
+
+    except Exception as e:
+
+        return jsonify({
+            "error": str(e)
+        }), 500
+
+# =========================
+# UTM COORDINATES
+# =========================
+@app.route("/utm")
+def utm():
+
+    try:
+
+        lat = float(
+            request.args.get("lat")
+        )
+
+        lon = float(
+            request.args.get("lon")
+        )
+
+        return jsonify(
+            get_utm_coordinates(
+                lat,
+                lon
+            )
         )
 
     except Exception as e:

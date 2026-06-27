@@ -848,6 +848,23 @@ await axios.get(
 const terrain =
 terrainResponse.data;
 
+// =========================
+// 🌍 UTM COORDINATES
+// =========================
+const utmResponse =
+  await axios.get(
+    `${GIS_URL}/utm`,
+    {
+      params: {
+        lat: centerLat,
+        lon: centerLon
+      }
+    }
+  );
+
+const utm =
+  utmResponse.data;
+
     // =========================
 // 🌦 REAL WEATHER
 // =========================
@@ -1206,6 +1223,7 @@ res.json({
   farmer,
   survey,
   terrain,
+  utm,
   weather,
   gis,
   alerts,
