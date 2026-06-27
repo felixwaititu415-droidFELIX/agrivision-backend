@@ -7,7 +7,8 @@ from gis_engine import (
     get_ndvi_history,
     get_terrain,
     aspect_to_direction,
-    get_utm_coordinates
+    get_utm_coordinates,
+    get_satellite_image,
 )
 
 app = Flask(__name__)
@@ -265,6 +266,40 @@ def utm():
         return jsonify({
             "error": str(e)
         }), 500
+    
+    # =========================
+# SATELLITE IMAGE
+# =========================
+@app.route(
+    "/satellite_image",
+    methods=["POST"]
+)
+def satellite_image():
+
+    data = request.json
+
+    points = data["points"]
+
+    coordinates = [
+        [p["lon"], p["lat"]]
+        for p in points
+    ]
+
+    coordinates.append(coordinates[0])
+
+    region = ee.Geometry.Polygon(
+        [coordinates]
+    )
+
+    tile_url = get_satellite_image(
+        region
+    )
+
+    return jsonify({
+
+        "tile_url": tile_url
+
+    })
 
 # =========================
 # RUN SERVER

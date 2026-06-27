@@ -282,3 +282,50 @@ def get_utm_coordinates(lat, lon):
         "epsg": epsg
 
     }
+
+# =========================
+# SATELLITE IMAGE
+# =========================
+def get_satellite_image(region):
+
+    collection = (
+
+        ee.ImageCollection(
+            "COPERNICUS/S2_SR_HARMONIZED"
+        )
+
+        .filterBounds(region)
+
+        .filterDate(
+            "2024-01-01",
+            "2024-12-31"
+        )
+
+        .filter(
+            ee.Filter.lt(
+                "CLOUDY_PIXEL_PERCENTAGE",
+                20
+            )
+        )
+
+    )
+
+    image = collection.median()
+
+    rgb = image.select(
+        ["B4", "B3", "B2"]
+    )
+
+    rgb = rgb.visualize(
+
+        min=0,
+
+        max=3000,
+
+        gamma=1.2
+
+    )
+
+    map_id = rgb.getMapId()
+
+    return map_id["tile_fetcher"].url_format
