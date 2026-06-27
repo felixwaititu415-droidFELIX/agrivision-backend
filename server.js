@@ -864,6 +864,71 @@ if (
   centerLon = farmer.geometry.points[0].lon;
 }
 
+// ==========================
+// SATELLITE TILE
+// ==========================
+app.get(
+  "/satellite-image/:id",
+  async (req, res) => {
+
+    try {
+
+      const doc =
+        await db
+          .collection("farmers")
+          .doc(req.params.id)
+          .get();
+
+      if (!doc.exists) {
+
+        return res.status(404).json({
+          error: "Farm not found"
+        });
+
+      }
+
+      const farmer =
+        doc.data();
+
+      const response =
+        await axios.post(
+
+          `${GIS_URL}/satellite_image`,
+
+          {
+
+            points:
+              farmer.geometry.points
+
+          }
+
+        );
+
+      res.json({
+
+        satellite_map:
+          response.data.tile_url
+
+      });
+
+    }
+
+    catch (err) {
+
+      console.error(err.message);
+
+      res.status(500).json({
+
+        error:
+          err.message
+
+      });
+
+    }
+
+  }
+);
+
 
     // =========================
     // 🌍 GIS DATA FROM FLASK
