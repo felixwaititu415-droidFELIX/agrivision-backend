@@ -1480,6 +1480,78 @@ app.get(
 
   }
 );
+
+// ==========================
+// SATELLITE PNG
+// ==========================
+app.get("/satellite-png/:id", async (req, res) => {
+
+  try {
+
+    const doc =
+      await db
+        .collection("farmers")
+        .doc(req.params.id)
+        .get();
+
+    if (!doc.exists) {
+
+      return res.status(404).json({
+        error: "Farm not found"
+      });
+
+    }
+
+    const farmer = doc.data();
+
+    if (
+      !farmer.geometry ||
+      !farmer.geometry.points
+    ) {
+
+      return res.status(400).json({
+        error: "Farm has no polygon."
+      });
+
+    }
+
+    const response =
+      await axios.post(
+
+        `${GIS_URL}/satellite_png`,
+
+        {
+
+          points:
+            farmer.geometry.points
+
+        }
+
+      );
+
+    res.json({
+
+      success: true,
+
+      satellite_png:
+        response.data.image_url
+
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+
+      error:
+        err.message
+
+    });
+
+  }
+
+});
  
 // ==========================
 // EXPORT GEOJSON
