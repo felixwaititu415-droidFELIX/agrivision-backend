@@ -482,47 +482,136 @@ function getSurveyInfo(points) {
 
 
 // ==========================
-// REAL WEATHER (OPEN-METEO)
+// WEATHER SERVICE
 // ==========================
+
+let weatherCache = {};
+
 async function getWeather(lat, lon) {
 
-  const response = await axios.get(
-    "https://api.open-meteo.com/v1/forecast",
-    {
-      params: {
-        latitude: lat,
-        longitude: lon,
+  const cacheKey =
+      `${lat.toFixed(4)},${lon.toFixed(4)}`;
 
-        current: [
-          "temperature_2m",
-          "relative_humidity_2m",
-          "wind_speed_10m"
-        ].join(","),
+  // --------------------------
+  // CACHE (30 minutes)
+  // --------------------------
+  if (weatherCache[cacheKey]) {
 
-        daily: [
-          "precipitation_sum"
-        ].join(","),
+    const cached =
+        weatherCache[cacheKey];
 
-        timezone: "auto"
-      }
+    if (
+      Date.now() - cached.time <
+      30 * 60 * 1000
+    ) {
+
+      console.log(
+        "Using cached weather."
+      );
+
+      return cached.data;
+
     }
+
+  }
+
+  // --------------------------
+  // RETRY
+  // --------------------------
+  for (let attempt = 1; attempt <= 3; attempt++) {
+
+    try {
+
+      const response =
+          await axios.get(
+        "https://api.open-meteo.com/v1/forecast",
+        {
+          params: {
+
+            latitude: lat,
+
+            longitude: lon,
+
+            current: [
+              "temperature_2m",
+              "relative_humidity_2m",
+              "wind_speed_10m"
+            ].join(","),
+
+            daily: [
+              "precipitation_sum"
+            ].join(","),
+
+            timezone: "auto"
+
+          }
+        }
+      );
+
+      const rainfall =
+          response.data.daily.precipitation_sum.reduce(
+            (a, b) => a + b,
+            0
+          );
+
+      const weather = {
+
+        temperature_2m:
+            response.data.current.temperature_2m,
+
+        relative_humidity_2m:
+            response.data.current.relative_humidity_2m,
+
+        wind_speed_10m:
+            response.data.current.wind_speed_10m,
+
+        rainfall
+
+      };
+
+      weatherCache[cacheKey] = {
+
+        time: Date.now(),
+
+        data: weather
+
+      };
+
+      return weather;
+
+    }
+
+    catch (err) {
+
+      console.log(
+        `Weather attempt ${attempt} failed`
+      );
+
+    }
+
+  }
+
+  // --------------------------
+  // FALLBACK
+  // --------------------------
+
+  console.log(
+    "Weather fallback activated."
   );
 
-  const totalRainfall =
-    response.data.daily.precipitation_sum.reduce(
-      (sum, value) => sum + value,
-      0
-    );
-
   return {
-    temperature_2m: response.data.current.temperature_2m,
-    relative_humidity_2m:
-      response.data.current.relative_humidity_2m,
-    wind_speed_10m:
-      response.data.current.wind_speed_10m,
-    rainfall: totalRainfall
+
+    temperature_2m: 25,
+  
+    relative_humidity_2m: 50,
+  
+    wind_speed_10m: 2,
+  
+    rainfall: 0
+  
   };
-}
+  
+  }
 
 
 // ==========================
@@ -874,10 +963,34 @@ const utm =
     // =========================
 // 🌦 REAL WEATHER
 // =========================
-const currentWeather = await getWeather(
-  centerLat,
-  centerLon
-);
+let currentWeather;
+
+try {
+
+  currentWeather = await getWeather(
+    centerLat,
+    centerLon,
+  );
+
+} catch (e) {
+
+  console.log(
+    "Weather API unavailable. Using fallback."
+  );
+
+  currentWeather = {
+
+    temperature_2m: 25,
+
+    rainfall: 0,
+
+    relative_humidity_2m: 50,
+
+    wind_speed_10m: 2
+
+  };
+
+}
 console.log("========== WEATHER ==========");
 console.log(JSON.stringify(currentWeather, null, 2));
 console.log("=============================");
