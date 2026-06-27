@@ -4,7 +4,9 @@ import ee
 from gis_engine import (
     get_ndvi_value,
     get_ndvi_image,
-    get_ndvi_history
+    get_ndvi_history,
+    get_terrain,
+    aspect_to_direction
 )
 
 app = Flask(__name__)
@@ -186,6 +188,47 @@ def ndvi_history():
         return jsonify({
             "history": history
         })
+
+    except Exception as e:
+
+        return jsonify({
+            "error": str(e)
+        }), 500
+    
+# =========================
+# TERRAIN ANALYSIS
+# =========================
+@app.route("/terrain")
+def terrain():
+
+    try:
+
+        lat = float(
+            request.args.get("lat")
+        )
+
+        lon = float(
+            request.args.get("lon")
+        )
+
+        region = (
+            ee.Geometry.Point(
+                [lon, lat]
+            )
+            .buffer(500)
+        )
+
+        terrain_data = get_terrain(region)
+
+        terrain_data["aspect_direction"] = (
+            aspect_to_direction(
+                terrain_data["aspect"]
+            )
+        )
+
+        return jsonify(
+            terrain_data
+        )
 
     except Exception as e:
 

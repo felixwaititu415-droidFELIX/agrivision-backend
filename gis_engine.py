@@ -167,3 +167,79 @@ def get_ndvi_history(region):
         })
 
     return history
+
+# =========================
+# TERRAIN ANALYSIS
+# =========================
+def get_terrain(region):
+
+    dem = ee.Image(
+        "USGS/SRTMGL1_003"
+    )
+
+    terrain = ee.Algorithms.Terrain(dem)
+
+    elevation = dem.reduceRegion(
+        reducer=ee.Reducer.mean(),
+        geometry=region,
+        scale=30,
+        maxPixels=1e9
+    ).get("elevation")
+
+    slope = terrain.select(
+        "slope"
+    ).reduceRegion(
+        reducer=ee.Reducer.mean(),
+        geometry=region,
+        scale=30,
+        maxPixels=1e9
+    ).get("slope")
+
+    aspect = terrain.select(
+        "aspect"
+    ).reduceRegion(
+        reducer=ee.Reducer.mean(),
+        geometry=region,
+        scale=30,
+        maxPixels=1e9
+    ).get("aspect")
+
+    return {
+
+        "elevation":
+            elevation.getInfo()
+            if elevation
+            else 0,
+
+        "slope":
+            slope.getInfo()
+            if slope
+            else 0,
+
+        "aspect":
+            aspect.getInfo()
+            if aspect
+            else 0
+
+    }
+def aspect_to_direction(angle):
+
+    if angle is None:
+        return "Unknown"
+
+    directions = [
+        "North",
+        "North-East",
+        "East",
+        "South-East",
+        "South",
+        "South-West",
+        "West",
+        "North-West"
+    ]
+
+    index = int(
+        ((angle + 22.5) % 360) / 45
+    )
+
+    return directions[index]

@@ -474,6 +474,7 @@ function getSurveyInfo(points) {
 
 }
 
+
 // ==========================
 // REAL WEATHER (OPEN-METEO)
 // ==========================
@@ -829,6 +830,23 @@ if (
       );
     
     }
+
+    // =========================
+// 🏔 TERRAIN ANALYSIS
+// =========================
+const terrainResponse =
+await axios.get(
+  `${GIS_URL}/terrain`,
+  {
+    params: {
+      lat: centerLat,
+      lon: centerLon
+    }
+  }
+);
+
+const terrain =
+terrainResponse.data;
 
     // =========================
 // 🌦 REAL WEATHER
@@ -1187,6 +1205,7 @@ console.log("REACHED FINAL RESPONSE");
 res.json({
   farmer,
   survey,
+  terrain,
   weather,
   gis,
   alerts,
