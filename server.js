@@ -837,6 +837,8 @@ No extra text.
 // ADVISORY (FULL GIS + NDVI + HEATMAP)
 // ==========================
 app.get("/advisory/:id", async (req, res) => {
+  console.log("========== ADVISORY REQUEST ==========");
+console.log("Farm ID:", req.params.id);
   try {
     const doc = await db.collection("farmers").doc(req.params.id).get();
 
@@ -851,6 +853,44 @@ app.get("/advisory/:id", async (req, res) => {
         farmer.geometry.points
       )
     : null;
+
+    // =========================
+// SAVE CALCULATED SURVEY DATA
+// =========================
+if (survey) {
+
+  try {
+
+    console.log("Updating Firestore for:", req.params.id);
+
+    await db
+      .collection("farmers")
+      .doc(req.params.id)
+      .update({
+
+        area_m2: survey.area_m2,
+
+        area_ha: survey.area_ha,
+
+        area_acres: survey.area_acres,
+
+        perimeter_m: survey.perimeter_m,
+
+        centroid: survey.centroid
+
+      });
+
+    console.log("Firestore updated successfully.");
+
+  } catch (e) {
+
+    console.error("FIRESTORE UPDATE FAILED");
+    console.error(e);
+
+  }
+
+}
+
     let centerLat = farmer.lat;
 let centerLon = farmer.lon;
 
@@ -1122,9 +1162,9 @@ const cropFactor =
 // PREDICTED YIELD
 // =========================
 const farmSize =
-parseFloat(
-  farmer.farm_size || 1
-);
+farmer.area_acres ??
+survey.area_acres ??
+1;
 
 let weatherFactor = 1;
 
