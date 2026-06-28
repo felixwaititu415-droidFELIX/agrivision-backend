@@ -1875,6 +1875,123 @@ app.post(
   }
 );
 
+// ==========================
+// IMPORT GEOJSON
+// ==========================
+app.post(
+  "/import/geojson",
+  upload.single("geojson"),
+  async (req, res) => {
+
+    try {
+
+      if (!req.file) {
+
+        return res.status(400).json({
+          error: "No GeoJSON uploaded"
+        });
+
+      }
+
+      const geojson = JSON.parse(
+        fs.readFileSync(
+          req.file.path,
+          "utf8"
+        )
+      );
+
+      let coordinates;
+
+      if (geojson.type === "Feature") {
+
+        coordinates =
+          geojson.geometry.coordinates[0];
+
+      } else if (
+
+        geojson.type === "FeatureCollection"
+
+      ) {
+
+        coordinates =
+          geojson.features[0]
+            .geometry.coordinates[0];
+
+      } else {
+
+        coordinates =
+          geojson.coordinates[0];
+
+      }
+
+      const points = coordinates.map(
+        c => ({
+
+          lon: c[0],
+
+          lat: c[1]
+
+        })
+      );
+
+      // Remove duplicated closing point
+      if (points.length > 1) {
+
+        const first = points[0];
+
+        const last =
+          points[points.length - 1];
+
+        if (
+
+          first.lat === last.lat &&
+
+          first.lon === last.lon
+
+        ) {
+
+          points.pop();
+
+        }
+
+      }
+
+      fs.unlinkSync(req.file.path);
+
+      res.json({
+
+        success: true,
+
+        points
+
+      });
+
+    }
+
+    catch (err) {
+
+      if (
+
+        req.file &&
+
+        fs.existsSync(req.file.path)
+
+      ) {
+
+        fs.unlinkSync(req.file.path);
+
+      }
+
+      res.status(500).json({
+
+        error: err.message
+
+      });
+
+    }
+
+  }
+);
 
 // ==========================
 // ASK AGRONOMIST (GEMINI)
