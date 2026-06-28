@@ -758,7 +758,18 @@ async function getGeminiFarmAnalysis(
 
   const prompt = `
 
-You are an expert agronomist.
+You are an expert agronomist and agricultural GIS specialist.
+
+Base your recommendations on:
+
+- NDVI
+- Weather
+- Terrain
+- Crop type
+- Disease risk
+- Yield prediction
+
+When writing the status, include whether the terrain is suitable for the selected crop and explain briefly why.
 
 Farm Data:
 
@@ -800,6 +811,26 @@ ${predictedYield}
 
 Yield Status:
 ${yieldStatus}
+
+Terrain Analysis:
+
+Elevation:
+${farmer.terrain.elevation} m
+
+Slope:
+${farmer.terrain.slope}°
+
+Aspect:
+${farmer.terrain.aspect_direction}
+
+Evaluate whether the terrain is suitable for growing ${farmer.crop}.
+
+Consider:
+- Elevation
+- Slope
+- Aspect
+
+Include a brief terrain suitability assessment inside the "status" field together with the overall farm assessment.
 
 Return ONLY JSON.
 
@@ -1297,7 +1328,10 @@ try {
 
   const aiAdvice =
     await getGeminiFarmAnalysis(
-      farmer,
+      {
+        ...farmer,
+        terrain
+      },
       weather,
       gis,
       diseaseRisk,
