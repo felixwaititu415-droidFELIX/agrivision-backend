@@ -8,6 +8,7 @@ from gis_engine import (
     get_terrain,
     aspect_to_direction,
     get_utm_coordinates,
+    get_utm_vertices,
     get_satellite_image,
     get_satellite_png,
 )
@@ -266,6 +267,39 @@ def utm():
 
         return jsonify({
             "error": str(e)
+        }), 500
+    
+    # =========================
+# UTM VERTICES
+# =========================
+@app.route(
+    "/utm_vertices",
+    methods=["POST"]
+)
+def utm_vertices():
+
+    try:
+
+        data = request.json
+
+        points = data["points"]
+
+        vertices = get_utm_vertices(
+            points
+        )
+
+        return jsonify({
+
+            "vertices": vertices
+
+        })
+
+    except Exception as e:
+
+        return jsonify({
+
+            "error": str(e)
+
         }), 500
     
     # =========================

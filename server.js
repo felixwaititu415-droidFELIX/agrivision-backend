@@ -959,6 +959,21 @@ const utmResponse =
 const utm =
   utmResponse.data;
 
+  // =========================
+// UTM VERTEX COORDINATES
+// =========================
+const utmVerticesResponse =
+await axios.post(
+  `${GIS_URL}/utm_vertices`,
+  {
+    points: farmer.geometry.points
+  }
+);
+
+const utmVertices =
+utmVerticesResponse.data.vertices;
+
+ 
     // =========================
 // 🌦 REAL WEATHER
 // =========================
@@ -1342,6 +1357,7 @@ res.json({
   survey,
   terrain,
   utm,
+  utmVertices,
   weather,
   gis,
   alerts,

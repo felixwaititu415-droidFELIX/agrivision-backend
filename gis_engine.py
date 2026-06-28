@@ -362,7 +362,7 @@ def get_satellite_png(region):
 
         "region": region,
 
-        "dimensions": 1200,
+        "dimensions": 4096,
 
         "format": "png",
 
@@ -370,8 +370,43 @@ def get_satellite_png(region):
 
         "max": 3000,
 
-        "gamma": 1.2
+        "gamma": 1.1,
+
+        "gain": 1.1,
 
     })
 
     return url
+
+# =========================
+# UTM VERTICES
+# =========================
+def get_utm_vertices(points):
+
+    vertices = []
+
+    for index, point in enumerate(points):
+
+        utm = get_utm_coordinates(
+
+            point["lat"],
+
+            point["lon"]
+
+        )
+
+        vertices.append({
+
+            "point": f"P{index + 1}",
+
+            "easting": utm["easting"],
+
+            "northing": utm["northing"],
+
+            "zone": utm["zone"],
+
+            "epsg": utm["epsg"]
+
+        })
+
+    return vertices
