@@ -41,10 +41,59 @@ else:
 
     except Exception:
         ee.Initialize()
+
+# =========================
+# ENSURE EARTH ENGINE
+# =========================
+def ensure_ee():
+
+    try:
+
+        ee.Number(1).getInfo()
+
+    except Exception:
+
+        print(
+            "Reinitializing Earth Engine..."
+        )
+
+        service_account = os.getenv(
+            "EE_SERVICE_ACCOUNT"
+        )
+
+        private_key = os.getenv(
+            "EE_PRIVATE_KEY"
+        )
+
+        if service_account and private_key:
+
+            private_key = private_key.replace(
+                "\\n",
+                "\n"
+            )
+
+            credentials = ee.ServiceAccountCredentials(
+                service_account,
+                key_data=private_key
+            )
+
+            ee.Initialize(
+                credentials,
+                project="tetu-nyeri"
+            )
+
+        else:
+
+            ee.Initialize(
+                project="tetu-nyeri"
+            )
+
 # =========================
 # NDVI FUNCTION
 # =========================
 def get_ndvi_image(region):
+
+    ensure_ee()
 
     collection = (
         ee.ImageCollection(
@@ -93,6 +142,8 @@ def get_ndvi_value(region):
 # NDVI HISTORY
 # =========================
 def get_ndvi_history(region):
+
+    ensure_ee()
 
     months = [
 
@@ -173,6 +224,8 @@ def get_ndvi_history(region):
 # TERRAIN ANALYSIS
 # =========================
 def get_terrain(region):
+
+    ensure_ee()
 
     dem = ee.Image(
         "USGS/SRTMGL1_003"
@@ -288,6 +341,8 @@ def get_utm_coordinates(lat, lon):
 # =========================
 def get_satellite_image(region):
 
+    ensure_ee()
+
     collection = (
 
         ee.ImageCollection(
@@ -334,6 +389,8 @@ def get_satellite_image(region):
 # SATELLITE PNG
 # =========================
 def get_satellite_png(region):
+
+    ensure_ee()
 
     collection = (
         ee.ImageCollection(

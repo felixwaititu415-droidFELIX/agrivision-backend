@@ -6,8 +6,74 @@ const app = express();
 const db = require("./firebase");
 
 const PORT = 3000;
-const GIS_URL =
+const GIS_PRIMARY =
   "https://agrivision-gis.onrender.com";
+
+const GIS_BACKUP =
+  "https://agrivision-gis-production.up.railway.app";
+
+  async function gisGet(endpoint, config = {}) {
+
+    try {
+  
+      return await axios.get(
+        `${GIS_PRIMARY}${endpoint}`,
+        {
+          timeout: 15000,
+          ...config
+        }
+      );
+  
+    } catch (e) {
+  
+      console.log(
+        "Primary GIS unavailable. Switching to Railway..."
+      );
+  
+      return await axios.get(
+        `${GIS_BACKUP}${endpoint}`,
+        {
+          timeout: 15000,
+          ...config
+        }
+      );
+  
+    }
+  
+  }
+  
+  async function gisPost(endpoint, data = {}, config = {}) {
+  
+    try {
+  
+      return await axios.post(
+        `${GIS_PRIMARY}${endpoint}`,
+        data,
+        {
+          timeout: 15000,
+          ...config
+        }
+      );
+  
+    } catch (e) {
+  
+      console.log(
+        "Primary GIS unavailable. Switching to Railway..."
+      );
+  
+      return await axios.post(
+        `${GIS_BACKUP}${endpoint}`,
+        data,
+        {
+          timeout: 15000,
+          ...config
+        }
+      );
+  
+    }
+  
+  }
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const turf = require("@turf/turf");
@@ -663,8 +729,8 @@ app.get(
       }
 
       const response =
-  await axios.get(
-    `${GIS_URL}/ndvi_history`,
+  await gisGet(
+    "/ndvi_history",
     {
       params: {
         lat: centerLat,
@@ -938,8 +1004,9 @@ if (
     // =========================
     // 🌍 GIS DATA FROM FLASK
     // =========================
-    const gisResponse = await axios.get(
-      `${GIS_URL}/gis`,
+    const gisResponse =
+await gisGet(
+  "/gis",
       {
         params: {
           lat: centerLat,
@@ -956,8 +1023,9 @@ if (
     let ndviValue = gisBase.ndvi;
 
     try {
-      const ndviResponse = await axios.get(
-        `${GIS_URL}/ndvi_point`,
+      const ndviResponse =
+await gisGet(
+  "/ndvi_point",
         {
           params: {
             lat: centerLat,
@@ -979,8 +1047,9 @@ if (
     let ndviMap = null;
 
     try {
-      const tileResponse = await axios.post(
-        `${GIS_URL}/farm_ndvi_tiles`,
+      const tileResponse =
+await gisPost(
+  "/farm_ndvi_tiles",
         {
           points: farmer.geometry.points
         }
@@ -1000,8 +1069,8 @@ if (
 // 🏔 TERRAIN ANALYSIS
 // =========================
 const terrainResponse =
-await axios.get(
-  `${GIS_URL}/terrain`,
+await gisGet(
+  "/terrain",
   {
     params: {
       lat: centerLat,
@@ -1017,8 +1086,8 @@ terrainResponse.data;
 // 🌍 UTM COORDINATES
 // =========================
 const utmResponse =
-  await axios.get(
-    `${GIS_URL}/utm`,
+await gisGet(
+  "/utm",
     {
       params: {
         lat: centerLat,
@@ -1034,8 +1103,8 @@ const utm =
 // UTM VERTEX COORDINATES
 // =========================
 const utmVerticesResponse =
-await axios.post(
-  `${GIS_URL}/utm_vertices`,
+await gisPost(
+  "/utm_vertices",
   {
     points: farmer.geometry.points
   }
@@ -1300,8 +1369,8 @@ else if (
 // NDVI HISTORY
 // =========================
 const historyResponse =
-  await axios.get(
-    `${GIS_URL}/ndvi_history`,
+await gisGet(
+  "/ndvi_history",
     {
       params: {
         lat: centerLat,
@@ -1532,10 +1601,10 @@ app.get(
       const farmer =
         doc.data();
 
-      const response =
-        await axios.post(
-
-          `${GIS_URL}/satellite_image`,
+        const response =
+        await gisPost(
+        
+          "/satellite_image",
 
           {
 
@@ -1606,9 +1675,9 @@ app.get("/satellite-png/:id", async (req, res) => {
     }
 
     const response =
-      await axios.post(
+await gisPost(
 
-        `${GIS_URL}/satellite_png`,
+  "/satellite_png",
 
         {
 
@@ -2182,9 +2251,10 @@ app.get("/satellite-png/:id", async (req, res) => {
 
     }
 
-    const response = await axios.post(
+    const response =
+await gisPost(
 
-      `${GIS_URL}/satellite_png`,
+  "/satellite_png",
 
       {
         points: farmer.geometry.points
